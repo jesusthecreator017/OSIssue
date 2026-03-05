@@ -11,6 +11,7 @@ import {
 	Shield,
 	LogOut,
 	User,
+	Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,17 @@ export function Navbar() {
 	const { user, isLoading, logout } = useAuth();
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
+
+	// Nav bar links
+	const navLinks = [
+		{ name: "Dashboard", href: "/", icon: <LayoutDashboard />},
+		{ name: "Profile", href: "/profile", icon: <User />},
+		{ name: "Issues", href: "/issues", icon: <AlertCircle />},
+		{ name: "Teams", href: "/teams", icon: <Users />},
+	];
+	const adminLinks = [
+		{ name: "Stats", href: "/admin", icon: <Shield />},
+	]
 
 	function handleLogout() {
 		logout();
@@ -89,39 +101,20 @@ export function Navbar() {
 								<span className="text-muted-foreground px-1 text-xs font-semibold uppercase">
 									Navigation
 								</span>
-								<Button
+								{navLinks.map( tab => (
+									<Button
+									key={tab.name}
 									variant="ghost"
 									className="justify-start"
 									asChild
 									onClick={() => setOpen(false)}
 								>
-									<Link href="/">
-										<LayoutDashboard className="mr-2 size-4" />
-										Dashboard
+									<Link href={tab.href}>
+										{tab.icon}
+										{tab.name}
 									</Link>
 								</Button>
-								<Button
-									variant="ghost"
-									className="justify-start"
-									asChild
-									onClick={() => setOpen(false)}
-								>
-									<Link href="/issues">
-										<AlertCircle className="mr-2 size-4" />
-										Issues
-									</Link>
-								</Button>
-								<Button
-									variant="ghost"
-									className="justify-start"
-									asChild
-									onClick={() => setOpen(false)}
-								>
-									<Link href="/profile">
-										<User className="mr-2 size-4" />
-										Profile
-									</Link>
-								</Button>
+								))}
 							</div>
 
 							{isAdmin && (
@@ -131,17 +124,20 @@ export function Navbar() {
 										<span className="text-muted-foreground px-1 text-xs font-semibold uppercase">
 											Admin
 										</span>
-										<Button
+										{adminLinks.map( link => (
+											<Button
+											key={link.name}
 											variant="ghost"
 											className="justify-start"
 											asChild
 											onClick={() => setOpen(false)}
 										>
-											<Link href="/admin">
-												<Shield className="mr-2 size-4" />
-												Stats
+											<Link href={link.href}>
+												{link.icon}
+												{link.name}
 											</Link>
 										</Button>
+										))}
 									</div>
 								</>
 							)}

@@ -46,3 +46,6 @@ sql:
           # translates between string and StatusType.
           - db_type: "status_type"
             go_type: "string"
+
+          - db_type: "team_role"
+            go_type: "string"

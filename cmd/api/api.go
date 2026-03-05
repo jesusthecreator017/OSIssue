@@ -45,6 +45,17 @@ func (app *application) mount() *http.ServeMux {
 	// Users
 	mux.HandleFunc("POST /v1/users/register", app.registerUserHandler)
 	mux.HandleFunc("POST /v1/users/login", app.loginUserHandler)
+	mux.Handle("GET /v1/users/search", middleware.RequiredAuth(http.HandlerFunc(app.searchUsersHandler)))
+
+	// Teams
+	mux.Handle("POST /v1/teams", middleware.RequiredAuth(http.HandlerFunc(app.createTeamHandler)))
+	mux.Handle("GET /v1/teams", middleware.RequiredAuth(http.HandlerFunc(app.listTeamsHandler)))
+	mux.Handle("GET /v1/teams/{id}", middleware.RequiredAuth(http.HandlerFunc(app.getTeamHandler)))
+	mux.Handle("GET /v1/teams/{id}/members", middleware.RequiredAuth(http.HandlerFunc(app.getTeamMembersHandler)))
+	mux.Handle("POST /v1/teams/{id}/members", middleware.RequiredAuth(http.HandlerFunc(app.addTeamMemberHandler)))
+	mux.Handle("DELETE /v1/teams/{id}/members/{userId}", middleware.RequiredAuth(http.HandlerFunc(app.removeTeamMemberHandler)))
+	mux.Handle("DELETE /v1/teams/{id}", middleware.RequiredAuth(http.HandlerFunc(app.deleteTeamHandler)))
+	mux.Handle("GET /v1/me/teams", middleware.RequiredAuth(http.HandlerFunc(app.getUserTeamsHandler)))
 
 	// Admin
 	mux.Handle("GET /v1/admin/stats", middleware.RequiredAuth(middleware.RequiredAdmin(http.HandlerFunc(app.adminStatsHandler))))

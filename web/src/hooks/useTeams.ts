@@ -46,8 +46,7 @@ export function useDeleteTeam() {
 export function useAddTeamMember(teamId: string) {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: (data: AddTeamMemberInput) =>
-			teamsApi.addMember(teamId, data),
+		mutationFn: (data: AddTeamMemberInput) => teamsApi.addMember(teamId, data),
 		onSuccess: () =>
 			qc.invalidateQueries({ queryKey: ["teams", teamId, "members"] }),
 	});

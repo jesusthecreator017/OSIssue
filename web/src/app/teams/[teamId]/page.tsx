@@ -72,9 +72,7 @@ export default function TeamDetailPage() {
 								{team.description || "No description"}
 							</p>
 						</div>
-						<Badge variant="secondary">
-							Max {team.max_members} members
-						</Badge>
+						<Badge variant="secondary">Max {team.max_members} members</Badge>
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-6">
@@ -100,9 +98,7 @@ export default function TeamDetailPage() {
 									disabled={deleteTeam.isPending}
 								>
 									<Trash2 className="mr-2 size-4" />
-									{deleteTeam.isPending
-										? "Deleting..."
-										: "Delete Team"}
+									{deleteTeam.isPending ? "Deleting..." : "Delete Team"}
 								</Button>
 							</div>
 						</>

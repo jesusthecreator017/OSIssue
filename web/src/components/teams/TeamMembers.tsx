@@ -9,7 +9,10 @@ import { useTeamMembers, useRemoveTeamMember } from "@/hooks/useTeams";
 import { useAuth } from "@/contexts/AuthContext";
 import type { TeamMember } from "@/schemas/teams";
 
-const roleBadgeVariant: Record<string, "default" | "secondary" | "destructive"> = {
+const roleBadgeVariant: Record<
+	string,
+	"default" | "secondary" | "destructive"
+> = {
 	owner: "default",
 	admin: "secondary",
 	member: "secondary",
@@ -32,7 +35,9 @@ export function TeamMembers({
 		removeMember.mutate(member.user_id, {
 			onSuccess: () => toast.success("Member removed"),
 			onError: (err) =>
-				toast.error(err instanceof Error ? err.message : "Failed to remove member"),
+				toast.error(
+					err instanceof Error ? err.message : "Failed to remove member",
+				),
 		});
 	}
 
@@ -54,11 +59,14 @@ export function TeamMembers({
 					<div className="flex items-center gap-3">
 						<UserAvatar name={member.user_name ?? member.user_id.slice(0, 8)} />
 						<div>
-							<p className="text-sm font-medium">{member.user_name ?? member.user_id}</p>
-							{member.email && <p className="text-muted-foreground text-xs">{member.email}</p>}
+							<p className="text-sm font-medium">
+								{member.user_name ?? member.user_id}
+							</p>
+							{member.email && (
+								<p className="text-muted-foreground text-xs">{member.email}</p>
+							)}
 							<p className="text-muted-foreground text-xs">
-								Joined{" "}
-								{new Date(member.joined_at).toLocaleDateString()}
+								Joined {new Date(member.joined_at).toLocaleDateString()}
 							</p>
 						</div>
 					</div>

@@ -34,7 +34,9 @@ export function CreateTeamDialog() {
 				setOpen(false);
 				form.reset();
 			} catch (err) {
-				toast.error(err instanceof Error ? err.message : "Failed to create team");
+				toast.error(
+					err instanceof Error ? err.message : "Failed to create team",
+				);
 			}
 		},
 	});
@@ -96,9 +98,7 @@ export function CreateTeamDialog() {
 									id="max_members"
 									type="number"
 									value={field.state.value}
-									onChange={(e) =>
-										field.handleChange(Number(e.target.value))
-									}
+									onChange={(e) => field.handleChange(Number(e.target.value))}
 									min={1}
 								/>
 							</div>

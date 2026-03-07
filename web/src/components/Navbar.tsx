@@ -32,14 +32,12 @@ export function Navbar() {
 
 	// Nav bar links
 	const navLinks = [
-		{ name: "Dashboard", href: "/", icon: <LayoutDashboard />},
-		{ name: "Profile", href: "/profile", icon: <User />},
-		{ name: "Issues", href: "/issues", icon: <AlertCircle />},
-		{ name: "Teams", href: "/teams", icon: <Users />},
+		{ name: "Dashboard", href: "/", icon: <LayoutDashboard /> },
+		{ name: "Profile", href: "/profile", icon: <User /> },
+		{ name: "Issues", href: "/issues", icon: <AlertCircle /> },
+		{ name: "Teams", href: "/teams", icon: <Users /> },
 	];
-	const adminLinks = [
-		{ name: "Stats", href: "/admin", icon: <Shield />},
-	]
+	const adminLinks = [{ name: "Stats", href: "/admin", icon: <Shield /> }];
 
 	function handleLogout() {
 		logout();
@@ -101,19 +99,19 @@ export function Navbar() {
 								<span className="text-muted-foreground px-1 text-xs font-semibold uppercase">
 									Navigation
 								</span>
-								{navLinks.map( tab => (
+								{navLinks.map((tab) => (
 									<Button
-									key={tab.name}
-									variant="ghost"
-									className="justify-start"
-									asChild
-									onClick={() => setOpen(false)}
-								>
-									<Link href={tab.href}>
-										{tab.icon}
-										{tab.name}
-									</Link>
-								</Button>
+										key={tab.name}
+										variant="ghost"
+										className="justify-start"
+										asChild
+										onClick={() => setOpen(false)}
+									>
+										<Link href={tab.href}>
+											{tab.icon}
+											{tab.name}
+										</Link>
+									</Button>
 								))}
 							</div>
 
@@ -124,19 +122,19 @@ export function Navbar() {
 										<span className="text-muted-foreground px-1 text-xs font-semibold uppercase">
 											Admin
 										</span>
-										{adminLinks.map( link => (
+										{adminLinks.map((link) => (
 											<Button
-											key={link.name}
-											variant="ghost"
-											className="justify-start"
-											asChild
-											onClick={() => setOpen(false)}
-										>
-											<Link href={link.href}>
-												{link.icon}
-												{link.name}
-											</Link>
-										</Button>
+												key={link.name}
+												variant="ghost"
+												className="justify-start"
+												asChild
+												onClick={() => setOpen(false)}
+											>
+												<Link href={link.href}>
+													{link.icon}
+													{link.name}
+												</Link>
+											</Button>
 										))}
 									</div>
 								</>

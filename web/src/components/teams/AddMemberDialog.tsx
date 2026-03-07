@@ -107,9 +107,7 @@ export function AddMemberDialog({ teamId }: { teamId: string }) {
 			setOpen(false);
 			resetState();
 		} catch (err) {
-			toast.error(
-				err instanceof Error ? err.message : "Failed to add member",
-			);
+			toast.error(err instanceof Error ? err.message : "Failed to add member");
 		}
 	}
 

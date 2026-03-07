@@ -1,0 +1,5 @@
+ALTER TABLE team_members
+    ALTER COLUMN role SET DATA TYPE TEXT USING role::TEXT,
+    ALTER COLUMN role SET DEFAULT 'member';
+
+DROP TYPE IF EXISTS team_role;

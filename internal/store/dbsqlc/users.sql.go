@@ -110,3 +110,36 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 	)
 	return i, err
 }
+
+const searchUsersByName = `-- name: SearchUsersByName :many
+SELECT u.id, u.name, u.email
+FROM users u
+WHERE u.name ILIKE '%' || $1 || '%'
+LIMIT 10
+`
+
+type SearchUsersByNameRow struct {
+	ID    uuid.UUID `json:"id"`
+	Name  string    `json:"name"`
+	Email string    `json:"email"`
+}
+
+func (q *Queries) SearchUsersByName(ctx context.Context, dollar_1 pgtype.Text) ([]SearchUsersByNameRow, error) {
+	rows, err := q.db.Query(ctx, searchUsersByName, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SearchUsersByNameRow{}
+	for rows.Next() {
+		var i SearchUsersByNameRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

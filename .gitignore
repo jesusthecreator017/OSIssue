@@ -1,8 +1,8 @@
 # Go
 bin/
 tmp/
-api
-migrate
+/api
+/migrate
 *.exe
 *.exe~
 *.dll

@@ -11,6 +11,7 @@ import (
 )
 
 const UserIDKey contextKey = "user_id"
+const TeamIDKey contextKey = "team_id"
 const PermissionsKey contextKey = "permissions"
 
 func GlobalAuth(jwtSecret string) Middleware {
@@ -73,6 +74,11 @@ func RequiredAdmin(next http.Handler) http.Handler {
 
 func GetUserID(req *http.Request) uuid.UUID {
 	id, _ := req.Context().Value(UserIDKey).(uuid.UUID)
+	return id
+}
+
+func GetTeamID(req *http.Request) uuid.UUID {
+	id, _ := req.Context().Value(TeamIDKey).(uuid.UUID)
 	return id
 }
 

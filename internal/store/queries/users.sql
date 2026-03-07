@@ -12,3 +12,9 @@ WHERE u.email = $1;
 SELECT u.id, u.email, u.password_hash, u.name, u.permissions, u.created_at, u.updated_at
 FROM users u
 WHERE u.id = $1;
+
+-- name: SearchUsersByName :many
+SELECT u.id, u.name, u.email
+FROM users u
+WHERE u.name ILIKE '%' || $1 || '%'
+LIMIT 10;

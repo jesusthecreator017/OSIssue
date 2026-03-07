@@ -122,6 +122,22 @@ func (app *application) registerUserHandler(w http.ResponseWriter, req *http.Req
 	helpers.WriteJson(w, http.StatusCreated, helpers.Envelope{"user": user, "token": token})
 }
 
+func (app *application) searchUsersHandler(w http.ResponseWriter, req *http.Request) {
+	q := strings.TrimSpace(req.URL.Query().Get("q"))
+	if q == "" {
+		helpers.ErrorJson(w, http.StatusBadRequest, "query parameter 'q' is required")
+		return
+	}
+
+	users, err := app.store.Users.SearchByName(req.Context(), q)
+	if err != nil {
+		helpers.ErrorJson(w, http.StatusInternalServerError, "failed to search users")
+		return
+	}
+
+	helpers.WriteJson(w, http.StatusOK, helpers.Envelope{"users": users})
+}
+
 func (app *application) loginUserHandler(w http.ResponseWriter, req *http.Request) {
 	// Parase the JSON body
 	var input struct {

@@ -27,7 +27,6 @@ function formatDate(dateStr: string) {
 export default function ProfilePage() {
 	const { user, isLoading: authLoading } = useAuth();
 	const router = useRouter();
-	const { data: issuesData } = useIssues();
 
 	useEffect(() => {
 		if (!authLoading && !user) {
@@ -38,14 +37,6 @@ export default function ProfilePage() {
 	if (authLoading || !user) {
 		return null;
 	}
-
-	const userIssues =
-		issuesData?.filter((issue) => issue.user_id === user.id) ?? [];
-	const issuesByStatus = {
-		Incomplete: userIssues.filter((i) => i.status === "Incomplete").length,
-		"In-Progress": userIssues.filter((i) => i.status === "In-Progress").length,
-		Complete: userIssues.filter((i) => i.status === "Complete").length,
-	};
 
 	const permissions: string[] = [];
 	if (hasPermission(user.permissions, PERM_READ)) permissions.push("Read");
@@ -114,30 +105,6 @@ export default function ProfilePage() {
 					</div>
 				</CardContent>
 			</Card>
-
-			<h2 className="mt-8 mb-4 text-lg font-semibold">Your Issues</h2>
-			<div className="grid grid-cols-3 gap-4">
-				<Card>
-					<CardContent className="pt-6 text-center">
-						<p className="text-3xl font-bold">{issuesByStatus.Incomplete}</p>
-						<p className="text-muted-foreground text-sm">Incomplete</p>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent className="pt-6 text-center">
-						<p className="text-3xl font-bold">
-							{issuesByStatus["In-Progress"]}
-						</p>
-						<p className="text-muted-foreground text-sm">In Progress</p>
-					</CardContent>
-				</Card>
-				<Card>
-					<CardContent className="pt-6 text-center">
-						<p className="text-3xl font-bold">{issuesByStatus.Complete}</p>
-						<p className="text-muted-foreground text-sm">Complete</p>
-					</CardContent>
-				</Card>
-			</div>
 		</div>
 	);
 }

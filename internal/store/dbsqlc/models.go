@@ -55,6 +55,49 @@ func (ns NullStatusType) Value() (driver.Value, error) {
 	return string(ns.StatusType), nil
 }
 
+type TeamRole string
+
+const (
+	TeamRoleOwner  TeamRole = "owner"
+	TeamRoleAdmin  TeamRole = "admin"
+	TeamRoleMember TeamRole = "member"
+)
+
+func (e *TeamRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TeamRole(s)
+	case string:
+		*e = TeamRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TeamRole: %T", src)
+	}
+	return nil
+}
+
+type NullTeamRole struct {
+	TeamRole TeamRole `json:"team_role"`
+	Valid    bool     `json:"valid"` // Valid is true if TeamRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTeamRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.TeamRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TeamRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTeamRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TeamRole), nil
+}
+
 type Issue struct {
 	ID          int64              `json:"id"`
 	UserID      uuid.UUID          `json:"user_id"`
@@ -63,6 +106,24 @@ type Issue struct {
 	Status      string             `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Team struct {
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	CreatedBy   uuid.UUID          `json:"created_by"`
+	AvatarUrl   string             `json:"avatar_url"`
+	MaxMembers  int32              `json:"max_members"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type TeamMember struct {
+	UserID   uuid.UUID          `json:"user_id"`
+	TeamID   uuid.UUID          `json:"team_id"`
+	Role     string             `json:"role"`
+	JoinedAt pgtype.Timestamptz `json:"joined_at"`
 }
 
 type User struct {

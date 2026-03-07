@@ -29,9 +29,22 @@ type Storage struct {
 		Create(context.Context, *User) error
 		GetByEmail(context.Context, string) (*User, error)
 		GetByID(context.Context, uuid.UUID) (*User, error)
+		SearchByName(context.Context, string) ([]*User, error)
 	}
 	Admin interface {
 		GetStats(context.Context) (*AdminStats, error)
+	}
+	Teams interface {
+		Create(ctx context.Context, team *Team) error
+		GetTeamByID(ctx context.Context, id uuid.UUID) (*Team, error)
+		GetTeamByName(ctx context.Context, name string) (*Team, error)
+		GetTeamMemberList(ctx context.Context, teamID uuid.UUID) ([]*TeamMember, error)
+		GetTeamList(ctx context.Context) ([]*Team, error)
+		GetUserTeamsList(ctx context.Context, userID uuid.UUID) ([]*ListUserTeamsRow, error)
+		AddUserToTeam(ctx context.Context, teamMember *TeamMember) error
+		RemoveUserFromTeam(ctx context.Context, userID uuid.UUID, teamID uuid.UUID) error
+		CountMembers(ctx context.Context, teamID uuid.UUID) (int64, error)
+		Delete(ctx context.Context, id uuid.UUID) error
 	}
 }
 
@@ -48,5 +61,6 @@ func NewStorage(pool *pgxpool.Pool) Storage {
 		Issues: &IssueStore{queries: queries},
 		Users:  &UserStore{queries: queries},
 		Admin:  &AdminStore{queries: queries},
+		Teams:  &TeamStore{queries: queries},
 	}
 }

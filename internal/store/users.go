@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jesusthecreator017/fswithgo/internal/store/dbsqlc"
 )
 
@@ -81,4 +82,21 @@ func (u *UserStore) GetByID(ctx context.Context, id uuid.UUID) (*User, error) {
 		CreatedAt:    row.CreatedAt.Time,
 		UpdatedAt:    row.UpdatedAt.Time,
 	}, nil
+}
+
+func (u *UserStore) SearchByName(ctx context.Context, query string) ([]*User, error) {
+	rows, err := u.queries.SearchUsersByName(ctx, pgtype.Text{String: query, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("searching users: %w", err)
+	}
+
+	users := make([]*User, len(rows))
+	for i, row := range rows {
+		users[i] = &User{
+			ID:    row.ID,
+			Email: row.Email,
+			Name:  row.Name,
+		}
+	}
+	return users, nil
 }

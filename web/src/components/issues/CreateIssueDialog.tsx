@@ -13,33 +13,49 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { CreateIssueSchema } from "@/schemas/issue";
 import { useCreateIssue } from "@/hooks/useIssues";
 
 interface CreateIssueDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
+	defaultColumnId?: string;
 }
 
 export function CreateIssueDialog({
 	open,
 	onOpenChange,
+	defaultColumnId,
 }: CreateIssueDialogProps) {
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
+	const [priority, setPriority] = useState("Medium");
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const createIssue = useCreateIssue();
 
 	function resetForm() {
 		setTitle("");
 		setDescription("");
+		setPriority("Medium");
 		setErrors({});
 	}
 
 	function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 
-		const result = CreateIssueSchema.safeParse({ title, description });
+		const result = CreateIssueSchema.safeParse({
+			title,
+			description,
+			priority,
+			board_column_id: defaultColumnId,
+		});
 		if (!result.success) {
 			const fieldErrors: Record<string, string> = {};
 			for (const issue of result.error.issues) {
@@ -96,6 +112,20 @@ export function CreateIssueDialog({
 							placeholder="Optional description"
 							rows={3}
 						/>
+					</div>
+					<div className="grid gap-2">
+						<Label htmlFor="priority">Priority</Label>
+						<Select value={priority} onValueChange={setPriority}>
+							<SelectTrigger>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="Low">Low</SelectItem>
+								<SelectItem value="Medium">Medium</SelectItem>
+								<SelectItem value="High">High</SelectItem>
+								<SelectItem value="Critical">Critical</SelectItem>
+							</SelectContent>
+						</Select>
 					</div>
 					<DialogFooter>
 						<Button type="submit" disabled={createIssue.isPending}>

@@ -13,16 +13,21 @@ import (
 )
 
 const createIssue = `-- name: CreateIssue :one
-INSERT INTO issues (title, user_id, description, status)
-VALUES ($1, $2, $3, $4)
-RETURNING id, user_id, title, description, status, created_at, updated_at
+INSERT INTO issues (title, user_id, description, priority, assignee_id, team_id, board_column_id, position, due_date)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, user_id, assignee_id, team_id, board_column_id, position, title, description, priority, due_date, created_at, updated_at
 `
 
 type CreateIssueParams struct {
-	Title       string    `json:"title"`
-	UserID      uuid.UUID `json:"user_id"`
-	Description string    `json:"description"`
-	Status      string    `json:"status"`
+	Title         string             `json:"title"`
+	UserID        uuid.UUID          `json:"user_id"`
+	Description   string             `json:"description"`
+	Priority      string             `json:"priority"`
+	AssigneeID    pgtype.UUID        `json:"assignee_id"`
+	TeamID        pgtype.UUID        `json:"team_id"`
+	BoardColumnID pgtype.UUID        `json:"board_column_id"`
+	Position      int32              `json:"position"`
+	DueDate       pgtype.Timestamptz `json:"due_date"`
 }
 
 func (q *Queries) CreateIssue(ctx context.Context, arg CreateIssueParams) (Issue, error) {
@@ -30,15 +35,25 @@ func (q *Queries) CreateIssue(ctx context.Context, arg CreateIssueParams) (Issue
 		arg.Title,
 		arg.UserID,
 		arg.Description,
-		arg.Status,
+		arg.Priority,
+		arg.AssigneeID,
+		arg.TeamID,
+		arg.BoardColumnID,
+		arg.Position,
+		arg.DueDate,
 	)
 	var i Issue
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
+		&i.AssigneeID,
+		&i.TeamID,
+		&i.BoardColumnID,
+		&i.Position,
 		&i.Title,
 		&i.Description,
-		&i.Status,
+		&i.Priority,
+		&i.DueDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -50,63 +65,92 @@ DELETE FROM issues
 WHERE id = $1
 `
 
-func (q *Queries) DeleteIssue(ctx context.Context, id int64) error {
+func (q *Queries) DeleteIssue(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteIssue, id)
 	return err
 }
 
 const getIssueByID = `-- name: GetIssueByID :one
-SELECT i.id, i.user_id, i.title, i.description, i.status, i.created_at, i.updated_at,
-       u.name AS user_name
+SELECT i.id, i.user_id, i.assignee_id, i.team_id, i.board_column_id, i.position, i.title, i.description, i.priority, i.due_date, i.created_at, i.updated_at,
+       u.name AS user_name,
+       COALESCE(a.name, '') AS assignee_name,
+       COALESCE(bc.name, '') AS board_column_name
 FROM issues i
 JOIN users u ON u.id = i.user_id
+LEFT JOIN users a ON a.id = i.assignee_id
+LEFT JOIN board_columns bc ON bc.id = i.board_column_id
 WHERE i.id = $1
 `
 
 type GetIssueByIDRow struct {
-	ID          int64              `json:"id"`
-	UserID      uuid.UUID          `json:"user_id"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	Status      string             `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	UserName    string             `json:"user_name"`
+	ID              uuid.UUID          `json:"id"`
+	UserID          uuid.UUID          `json:"user_id"`
+	AssigneeID      pgtype.UUID        `json:"assignee_id"`
+	TeamID          pgtype.UUID        `json:"team_id"`
+	BoardColumnID   pgtype.UUID        `json:"board_column_id"`
+	Position        int32              `json:"position"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	Priority        string             `json:"priority"`
+	DueDate         pgtype.Timestamptz `json:"due_date"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	UserName        string             `json:"user_name"`
+	AssigneeName    string             `json:"assignee_name"`
+	BoardColumnName string             `json:"board_column_name"`
 }
 
-func (q *Queries) GetIssueByID(ctx context.Context, id int64) (GetIssueByIDRow, error) {
+func (q *Queries) GetIssueByID(ctx context.Context, id uuid.UUID) (GetIssueByIDRow, error) {
 	row := q.db.QueryRow(ctx, getIssueByID, id)
 	var i GetIssueByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
+		&i.AssigneeID,
+		&i.TeamID,
+		&i.BoardColumnID,
+		&i.Position,
 		&i.Title,
 		&i.Description,
-		&i.Status,
+		&i.Priority,
+		&i.DueDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserName,
+		&i.AssigneeName,
+		&i.BoardColumnName,
 	)
 	return i, err
 }
 
 const listIssues = `-- name: ListIssues :many
-SELECT i.id, i.user_id, i.title, i.description, i.status, i.created_at, i.updated_at,
-       u.name AS user_name
+SELECT i.id, i.user_id, i.assignee_id, i.team_id, i.board_column_id, i.position, i.title, i.description, i.priority, i.due_date, i.created_at, i.updated_at,
+       u.name AS user_name,
+       COALESCE(a.name, '') AS assignee_name,
+       COALESCE(bc.name, '') AS board_column_name
 FROM issues i
 JOIN users u ON u.id = i.user_id
+LEFT JOIN users a ON a.id = i.assignee_id
+LEFT JOIN board_columns bc ON bc.id = i.board_column_id
 ORDER BY i.created_at DESC
 `
 
 type ListIssuesRow struct {
-	ID          int64              `json:"id"`
-	UserID      uuid.UUID          `json:"user_id"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	Status      string             `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	UserName    string             `json:"user_name"`
+	ID              uuid.UUID          `json:"id"`
+	UserID          uuid.UUID          `json:"user_id"`
+	AssigneeID      pgtype.UUID        `json:"assignee_id"`
+	TeamID          pgtype.UUID        `json:"team_id"`
+	BoardColumnID   pgtype.UUID        `json:"board_column_id"`
+	Position        int32              `json:"position"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	Priority        string             `json:"priority"`
+	DueDate         pgtype.Timestamptz `json:"due_date"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	UserName        string             `json:"user_name"`
+	AssigneeName    string             `json:"assignee_name"`
+	BoardColumnName string             `json:"board_column_name"`
 }
 
 func (q *Queries) ListIssues(ctx context.Context) ([]ListIssuesRow, error) {
@@ -121,12 +165,220 @@ func (q *Queries) ListIssues(ctx context.Context) ([]ListIssuesRow, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
+			&i.AssigneeID,
+			&i.TeamID,
+			&i.BoardColumnID,
+			&i.Position,
 			&i.Title,
 			&i.Description,
-			&i.Status,
+			&i.Priority,
+			&i.DueDate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.UserName,
+			&i.AssigneeName,
+			&i.BoardColumnName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listIssuesByBoardColumnID = `-- name: ListIssuesByBoardColumnID :many
+SELECT i.id, i.user_id, i.assignee_id, i.team_id, i.board_column_id, i.position, i.title, i.description, i.priority, i.due_date, i.created_at, i.updated_at,
+       u.name AS user_name,
+       COALESCE(a.name, '') AS assignee_name,
+       COALESCE(bc.name, '') AS board_column_name
+FROM issues i
+JOIN users u ON u.id = i.user_id
+LEFT JOIN users a ON a.id = i.assignee_id
+LEFT JOIN board_columns bc ON bc.id = i.board_column_id
+WHERE i.board_column_id = $1
+ORDER BY i.position
+`
+
+type ListIssuesByBoardColumnIDRow struct {
+	ID              uuid.UUID          `json:"id"`
+	UserID          uuid.UUID          `json:"user_id"`
+	AssigneeID      pgtype.UUID        `json:"assignee_id"`
+	TeamID          pgtype.UUID        `json:"team_id"`
+	BoardColumnID   pgtype.UUID        `json:"board_column_id"`
+	Position        int32              `json:"position"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	Priority        string             `json:"priority"`
+	DueDate         pgtype.Timestamptz `json:"due_date"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	UserName        string             `json:"user_name"`
+	AssigneeName    string             `json:"assignee_name"`
+	BoardColumnName string             `json:"board_column_name"`
+}
+
+func (q *Queries) ListIssuesByBoardColumnID(ctx context.Context, boardColumnID pgtype.UUID) ([]ListIssuesByBoardColumnIDRow, error) {
+	rows, err := q.db.Query(ctx, listIssuesByBoardColumnID, boardColumnID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListIssuesByBoardColumnIDRow{}
+	for rows.Next() {
+		var i ListIssuesByBoardColumnIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.AssigneeID,
+			&i.TeamID,
+			&i.BoardColumnID,
+			&i.Position,
+			&i.Title,
+			&i.Description,
+			&i.Priority,
+			&i.DueDate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserName,
+			&i.AssigneeName,
+			&i.BoardColumnName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listIssuesByBoardID = `-- name: ListIssuesByBoardID :many
+SELECT i.id, i.user_id, i.assignee_id, i.team_id, i.board_column_id, i.position, i.title, i.description, i.priority, i.due_date, i.created_at, i.updated_at,
+       u.name AS user_name,
+       COALESCE(a.name, '') AS assignee_name,
+       COALESCE(bc.name, '') AS board_column_name
+FROM issues i
+JOIN board_columns bc ON bc.id = i.board_column_id
+JOIN users u ON u.id = i.user_id
+LEFT JOIN users a ON a.id = i.assignee_id
+WHERE bc.board_id = $1
+ORDER BY bc.position, i.position
+`
+
+type ListIssuesByBoardIDRow struct {
+	ID              uuid.UUID          `json:"id"`
+	UserID          uuid.UUID          `json:"user_id"`
+	AssigneeID      pgtype.UUID        `json:"assignee_id"`
+	TeamID          pgtype.UUID        `json:"team_id"`
+	BoardColumnID   pgtype.UUID        `json:"board_column_id"`
+	Position        int32              `json:"position"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	Priority        string             `json:"priority"`
+	DueDate         pgtype.Timestamptz `json:"due_date"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	UserName        string             `json:"user_name"`
+	AssigneeName    string             `json:"assignee_name"`
+	BoardColumnName string             `json:"board_column_name"`
+}
+
+func (q *Queries) ListIssuesByBoardID(ctx context.Context, boardID uuid.UUID) ([]ListIssuesByBoardIDRow, error) {
+	rows, err := q.db.Query(ctx, listIssuesByBoardID, boardID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListIssuesByBoardIDRow{}
+	for rows.Next() {
+		var i ListIssuesByBoardIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.AssigneeID,
+			&i.TeamID,
+			&i.BoardColumnID,
+			&i.Position,
+			&i.Title,
+			&i.Description,
+			&i.Priority,
+			&i.DueDate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserName,
+			&i.AssigneeName,
+			&i.BoardColumnName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listIssuesByTeamID = `-- name: ListIssuesByTeamID :many
+SELECT i.id, i.user_id, i.assignee_id, i.team_id, i.board_column_id, i.position, i.title, i.description, i.priority, i.due_date, i.created_at, i.updated_at,
+       u.name AS user_name,
+       COALESCE(a.name, '') AS assignee_name,
+       COALESCE(bc.name, '') AS board_column_name
+FROM issues i
+JOIN users u ON u.id = i.user_id
+LEFT JOIN users a ON a.id = i.assignee_id
+LEFT JOIN board_columns bc ON bc.id = i.board_column_id
+WHERE i.team_id = $1
+ORDER BY i.created_at DESC
+`
+
+type ListIssuesByTeamIDRow struct {
+	ID              uuid.UUID          `json:"id"`
+	UserID          uuid.UUID          `json:"user_id"`
+	AssigneeID      pgtype.UUID        `json:"assignee_id"`
+	TeamID          pgtype.UUID        `json:"team_id"`
+	BoardColumnID   pgtype.UUID        `json:"board_column_id"`
+	Position        int32              `json:"position"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	Priority        string             `json:"priority"`
+	DueDate         pgtype.Timestamptz `json:"due_date"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	UserName        string             `json:"user_name"`
+	AssigneeName    string             `json:"assignee_name"`
+	BoardColumnName string             `json:"board_column_name"`
+}
+
+func (q *Queries) ListIssuesByTeamID(ctx context.Context, teamID pgtype.UUID) ([]ListIssuesByTeamIDRow, error) {
+	rows, err := q.db.Query(ctx, listIssuesByTeamID, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListIssuesByTeamIDRow{}
+	for rows.Next() {
+		var i ListIssuesByTeamIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.AssigneeID,
+			&i.TeamID,
+			&i.BoardColumnID,
+			&i.Position,
+			&i.Title,
+			&i.Description,
+			&i.Priority,
+			&i.DueDate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserName,
+			&i.AssigneeName,
+			&i.BoardColumnName,
 		); err != nil {
 			return nil, err
 		}
@@ -139,23 +391,34 @@ func (q *Queries) ListIssues(ctx context.Context) ([]ListIssuesRow, error) {
 }
 
 const listIssuesByUserID = `-- name: ListIssuesByUserID :many
-SELECT i.id, i.user_id, i.title, i.description, i.status, i.created_at, i.updated_at,
-       u.name AS user_name
+SELECT i.id, i.user_id, i.assignee_id, i.team_id, i.board_column_id, i.position, i.title, i.description, i.priority, i.due_date, i.created_at, i.updated_at,
+       u.name AS user_name,
+       COALESCE(a.name, '') AS assignee_name,
+       COALESCE(bc.name, '') AS board_column_name
 FROM issues i
 JOIN users u ON u.id = i.user_id
+LEFT JOIN users a ON a.id = i.assignee_id
+LEFT JOIN board_columns bc ON bc.id = i.board_column_id
 WHERE i.user_id = $1
 ORDER BY i.created_at DESC
 `
 
 type ListIssuesByUserIDRow struct {
-	ID          int64              `json:"id"`
-	UserID      uuid.UUID          `json:"user_id"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	Status      string             `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	UserName    string             `json:"user_name"`
+	ID              uuid.UUID          `json:"id"`
+	UserID          uuid.UUID          `json:"user_id"`
+	AssigneeID      pgtype.UUID        `json:"assignee_id"`
+	TeamID          pgtype.UUID        `json:"team_id"`
+	BoardColumnID   pgtype.UUID        `json:"board_column_id"`
+	Position        int32              `json:"position"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	Priority        string             `json:"priority"`
+	DueDate         pgtype.Timestamptz `json:"due_date"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	UserName        string             `json:"user_name"`
+	AssigneeName    string             `json:"assignee_name"`
+	BoardColumnName string             `json:"board_column_name"`
 }
 
 func (q *Queries) ListIssuesByUserID(ctx context.Context, userID uuid.UUID) ([]ListIssuesByUserIDRow, error) {
@@ -170,12 +433,19 @@ func (q *Queries) ListIssuesByUserID(ctx context.Context, userID uuid.UUID) ([]L
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
+			&i.AssigneeID,
+			&i.TeamID,
+			&i.BoardColumnID,
+			&i.Position,
 			&i.Title,
 			&i.Description,
-			&i.Status,
+			&i.Priority,
+			&i.DueDate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.UserName,
+			&i.AssigneeName,
+			&i.BoardColumnName,
 		); err != nil {
 			return nil, err
 		}
@@ -187,27 +457,86 @@ func (q *Queries) ListIssuesByUserID(ctx context.Context, userID uuid.UUID) ([]L
 	return items, nil
 }
 
-const updateIssueStatus = `-- name: UpdateIssueStatus :one
+const moveIssue = `-- name: MoveIssue :one
 UPDATE issues
-SET status = $2, updated_at = now()
+SET board_column_id = $2,
+    position = $3,
+    updated_at = now()
 WHERE id = $1
-RETURNING id, user_id, title, description, status, created_at, updated_at
+RETURNING id, user_id, assignee_id, team_id, board_column_id, position, title, description, priority, due_date, created_at, updated_at
 `
 
-type UpdateIssueStatusParams struct {
-	ID     int64  `json:"id"`
-	Status string `json:"status"`
+type MoveIssueParams struct {
+	ID            uuid.UUID   `json:"id"`
+	BoardColumnID pgtype.UUID `json:"board_column_id"`
+	Position      int32       `json:"position"`
 }
 
-func (q *Queries) UpdateIssueStatus(ctx context.Context, arg UpdateIssueStatusParams) (Issue, error) {
-	row := q.db.QueryRow(ctx, updateIssueStatus, arg.ID, arg.Status)
+func (q *Queries) MoveIssue(ctx context.Context, arg MoveIssueParams) (Issue, error) {
+	row := q.db.QueryRow(ctx, moveIssue, arg.ID, arg.BoardColumnID, arg.Position)
 	var i Issue
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
+		&i.AssigneeID,
+		&i.TeamID,
+		&i.BoardColumnID,
+		&i.Position,
 		&i.Title,
 		&i.Description,
-		&i.Status,
+		&i.Priority,
+		&i.DueDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateIssue = `-- name: UpdateIssue :one
+UPDATE issues
+SET title = $2,
+    description = $3,
+    priority = $4,
+    assignee_id = $5,
+    team_id = $6,
+    due_date = $7,
+    updated_at = now()
+WHERE id = $1
+RETURNING id, user_id, assignee_id, team_id, board_column_id, position, title, description, priority, due_date, created_at, updated_at
+`
+
+type UpdateIssueParams struct {
+	ID          uuid.UUID          `json:"id"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Priority    string             `json:"priority"`
+	AssigneeID  pgtype.UUID        `json:"assignee_id"`
+	TeamID      pgtype.UUID        `json:"team_id"`
+	DueDate     pgtype.Timestamptz `json:"due_date"`
+}
+
+func (q *Queries) UpdateIssue(ctx context.Context, arg UpdateIssueParams) (Issue, error) {
+	row := q.db.QueryRow(ctx, updateIssue,
+		arg.ID,
+		arg.Title,
+		arg.Description,
+		arg.Priority,
+		arg.AssigneeID,
+		arg.TeamID,
+		arg.DueDate,
+	)
+	var i Issue
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.AssigneeID,
+		&i.TeamID,
+		&i.BoardColumnID,
+		&i.Position,
+		&i.Title,
+		&i.Description,
+		&i.Priority,
+		&i.DueDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

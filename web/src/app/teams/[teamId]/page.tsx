@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeam, useDeleteTeam } from "@/hooks/useTeams";
+import { useTeamBoard } from "@/hooks/useBoards";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { TeamMembers } from "@/components/teams/TeamMembers";
 import { AddMemberDialog } from "@/components/teams/AddMemberDialog";
+import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 
 export default function TeamDetailPage() {
 	const { teamId } = useParams<{ teamId: string }>();
@@ -19,6 +21,8 @@ export default function TeamDetailPage() {
 	const router = useRouter();
 	const { data: team, isLoading } = useTeam(teamId);
 	const deleteTeam = useDeleteTeam();
+	const { data: boardData } = useTeamBoard(teamId);
+	const [tab, setTab] = useState<"members" | "board">("members");
 
 	useEffect(() => {
 		if (!authLoading && !user) {
@@ -32,7 +36,7 @@ export default function TeamDetailPage() {
 
 	if (isLoading) {
 		return (
-			<div className="mx-auto max-w-4xl px-4 py-8">
+			<div className="mx-auto max-w-6xl px-4 py-8">
 				<p className="text-muted-foreground text-sm">Loading team...</p>
 			</div>
 		);
@@ -40,7 +44,7 @@ export default function TeamDetailPage() {
 
 	if (!team) {
 		return (
-			<div className="mx-auto max-w-4xl px-4 py-8">
+			<div className="mx-auto max-w-6xl px-4 py-8">
 				<p className="text-muted-foreground text-sm">Team not found.</p>
 			</div>
 		);
@@ -62,7 +66,7 @@ export default function TeamDetailPage() {
 	}
 
 	return (
-		<div className="mx-auto max-w-4xl px-4 py-8">
+		<div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
 			<Card>
 				<CardHeader>
 					<div className="flex items-center justify-between">
@@ -76,14 +80,45 @@ export default function TeamDetailPage() {
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-6">
-					<Separator />
-
-					<div className="flex items-center justify-between">
-						<h2 className="text-lg font-semibold">Members</h2>
-						{isCreator && <AddMemberDialog teamId={teamId} />}
+					<div className="flex gap-2">
+						<Button
+							variant={tab === "members" ? "default" : "outline"}
+							size="sm"
+							onClick={() => setTab("members")}
+						>
+							Members
+						</Button>
+						<Button
+							variant={tab === "board" ? "default" : "outline"}
+							size="sm"
+							onClick={() => setTab("board")}
+						>
+							Board
+						</Button>
 					</div>
 
-					<TeamMembers teamId={teamId} createdBy={team.created_by} />
+					<Separator />
+
+					{tab === "members" && (
+						<>
+							<div className="flex items-center justify-between">
+								<h2 className="text-lg font-semibold">Members</h2>
+								{isCreator && <AddMemberDialog teamId={teamId} />}
+							</div>
+							<TeamMembers teamId={teamId} createdBy={team.created_by} />
+						</>
+					)}
+
+					{tab === "board" && boardData && (
+						<KanbanBoard
+							board={boardData.board}
+							columns={boardData.columns}
+						/>
+					)}
+
+					{tab === "board" && !boardData && (
+						<p className="text-muted-foreground text-sm">Loading board...</p>
+					)}
 
 					{isCreator && (
 						<>

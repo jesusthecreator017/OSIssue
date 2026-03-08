@@ -9,25 +9,25 @@ import (
 	"context"
 )
 
-const countIssuesByStatus = `-- name: CountIssuesByStatus :many
-SELECT status, COUNT(*) AS count FROM issues GROUP BY status
+const countIssuesByPriority = `-- name: CountIssuesByPriority :many
+SELECT priority, COUNT(*) AS count FROM issues GROUP BY priority
 `
 
-type CountIssuesByStatusRow struct {
-	Status string `json:"status"`
-	Count  int64  `json:"count"`
+type CountIssuesByPriorityRow struct {
+	Priority string `json:"priority"`
+	Count    int64  `json:"count"`
 }
 
-func (q *Queries) CountIssuesByStatus(ctx context.Context) ([]CountIssuesByStatusRow, error) {
-	rows, err := q.db.Query(ctx, countIssuesByStatus)
+func (q *Queries) CountIssuesByPriority(ctx context.Context) ([]CountIssuesByPriorityRow, error) {
+	rows, err := q.db.Query(ctx, countIssuesByPriority)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []CountIssuesByStatusRow{}
+	items := []CountIssuesByPriorityRow{}
 	for rows.Next() {
-		var i CountIssuesByStatusRow
-		if err := rows.Scan(&i.Status, &i.Count); err != nil {
+		var i CountIssuesByPriorityRow
+		if err := rows.Scan(&i.Priority, &i.Count); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

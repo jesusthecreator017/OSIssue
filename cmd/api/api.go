@@ -21,26 +21,42 @@ type config struct {
 	jwtSecret  string
 }
 
-// dbConfig holds database connection settings.
-// These are read from environment variables in main.go.
 type dbConfig struct {
-	dsn         string        // PostgreSQL connection string
-	maxConns    int           // max open connections in the pool
-	maxIdleTime time.Duration // close connections idle longer than this
+	dsn         string
+	maxConns    int
+	maxIdleTime time.Duration
 }
 
 func (app *application) mount() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /v1/health", app.healthCheckHandler)
-	// Issue
+
+	// Issues
 	mux.Handle("GET /v1/issues", middleware.RequiredAuth(http.HandlerFunc(app.listIssueHandler)))
 	mux.HandleFunc("GET /v1/issues/{id}", app.getIssueHandler)
-
-	// Protected Issue routed
 	mux.Handle("POST /v1/issues", middleware.RequiredAuth(http.HandlerFunc(app.createIssueHandler)))
+	mux.Handle("PATCH /v1/issues/{id}", middleware.RequiredAuth(http.HandlerFunc(app.updateIssueHandler)))
+	mux.Handle("PATCH /v1/issues/{id}/move", middleware.RequiredAuth(http.HandlerFunc(app.moveIssueHandler)))
 	mux.Handle("DELETE /v1/issues/{id}", middleware.RequiredAuth(http.HandlerFunc(app.deleteIssueHandler)))
-	mux.Handle("PATCH /v1/issues/{id}/status", middleware.RequiredAuth(http.HandlerFunc(app.updateIssueStatusHandler)))
+
+	// Boards
+	mux.Handle("GET /v1/me/board", middleware.RequiredAuth(http.HandlerFunc(app.getPersonalBoardHandler)))
+	mux.Handle("GET /v1/teams/{id}/board", middleware.RequiredAuth(http.HandlerFunc(app.getTeamBoardHandler)))
+	mux.Handle("GET /v1/boards/{id}/issues", middleware.RequiredAuth(http.HandlerFunc(app.listBoardIssuesHandler)))
+
+	// Board columns
+	mux.Handle("POST /v1/boards/{id}/columns", middleware.RequiredAuth(http.HandlerFunc(app.createBoardColumnHandler)))
+	mux.Handle("PATCH /v1/boards/{id}/columns/{colId}", middleware.RequiredAuth(http.HandlerFunc(app.updateBoardColumnHandler)))
+	mux.Handle("PATCH /v1/boards/{id}/columns/{colId}/reorder", middleware.RequiredAuth(http.HandlerFunc(app.reorderBoardColumnHandler)))
+	mux.Handle("DELETE /v1/boards/{id}/columns/{colId}", middleware.RequiredAuth(http.HandlerFunc(app.deleteBoardColumnHandler)))
+
+	// Labels
+	mux.Handle("GET /v1/labels", middleware.RequiredAuth(http.HandlerFunc(app.listLabelsHandler)))
+	mux.Handle("POST /v1/labels", middleware.RequiredAuth(http.HandlerFunc(app.createLabelHandler)))
+	mux.Handle("POST /v1/issues/{id}/labels", middleware.RequiredAuth(http.HandlerFunc(app.addLabelToIssueHandler)))
+	mux.Handle("DELETE /v1/issues/{id}/labels/{labelId}", middleware.RequiredAuth(http.HandlerFunc(app.removeLabelFromIssueHandler)))
+	mux.Handle("GET /v1/issues/{id}/labels", middleware.RequiredAuth(http.HandlerFunc(app.listIssueLabelsHandler)))
 
 	// Users
 	mux.HandleFunc("POST /v1/users/register", app.registerUserHandler)
@@ -64,8 +80,6 @@ func (app *application) mount() *http.ServeMux {
 }
 
 func (app *application) run(mux *http.ServeMux) error {
-
-	// Global Middleware
 	stack := middleware.CreateStack(
 		middleware.CORS(app.config.corsOrigin),
 		middleware.Recoverer,

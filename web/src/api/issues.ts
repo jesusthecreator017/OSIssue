@@ -1,10 +1,17 @@
 import { apiFetch } from "./client";
-import type { Issue, CreateIssueInput, StatusType } from "../schemas/issue";
+import type {
+	Issue,
+	CreateIssueInput,
+	UpdateIssueInput,
+	MoveIssueInput,
+	Label,
+} from "../schemas/issue";
 
 export const issuesApi = {
-	list: () => apiFetch<{ issues: Issue[] }>("/v1/issues").then((r) => r.issues),
+	list: () =>
+		apiFetch<{ issues: Issue[] }>("/v1/issues").then((r) => r.issues),
 
-	getById: (id: number) =>
+	getById: (id: string) =>
 		apiFetch<{ issue: Issue }>(`/v1/issues/${id}`).then((r) => r.issue),
 
 	create: (data: CreateIssueInput) =>
@@ -13,14 +20,36 @@ export const issuesApi = {
 			body: JSON.stringify(data),
 		}).then((r) => r.issue),
 
-	updateStatus: (id: number, status: StatusType) =>
-		apiFetch<{ issue: Issue }>(`/v1/issues/${id}/status`, {
+	update: (id: string, data: UpdateIssueInput) =>
+		apiFetch<{ issue: Issue }>(`/v1/issues/${id}`, {
 			method: "PATCH",
-			body: JSON.stringify({ status }),
+			body: JSON.stringify(data),
 		}).then((r) => r.issue),
 
-	delete: (id: number) =>
+	move: (id: string, data: MoveIssueInput) =>
+		apiFetch<{ message: string }>(`/v1/issues/${id}/move`, {
+			method: "PATCH",
+			body: JSON.stringify(data),
+		}),
+
+	delete: (id: string) =>
 		apiFetch<{ message: string }>(`/v1/issues/${id}`, {
+			method: "DELETE",
+		}),
+
+	listLabels: (id: string) =>
+		apiFetch<{ labels: Label[] }>(`/v1/issues/${id}/labels`).then(
+			(r) => r.labels,
+		),
+
+	addLabel: (issueId: string, labelId: string) =>
+		apiFetch<{ message: string }>(`/v1/issues/${issueId}/labels`, {
+			method: "POST",
+			body: JSON.stringify({ label_id: labelId }),
+		}),
+
+	removeLabel: (issueId: string, labelId: string) =>
+		apiFetch<{ message: string }>(`/v1/issues/${issueId}/labels/${labelId}`, {
 			method: "DELETE",
 		}),
 };

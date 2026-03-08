@@ -2,7 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { issuesApi } from "@/api/issues";
-import type { CreateIssueInput, StatusType } from "@/schemas/issue";
+import type {
+	CreateIssueInput,
+	UpdateIssueInput,
+	MoveIssueInput,
+} from "@/schemas/issue";
 
 export function useIssues() {
 	return useQuery({
@@ -11,27 +15,55 @@ export function useIssues() {
 	});
 }
 
+export function useIssue(id: string) {
+	return useQuery({
+		queryKey: ["issues", id],
+		queryFn: () => issuesApi.getById(id),
+		enabled: !!id,
+	});
+}
+
 export function useCreateIssue() {
 	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: (data: CreateIssueInput) => issuesApi.create(data),
-		onSuccess: () => qc.invalidateQueries({ queryKey: ["issues"] }),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["issues"] });
+			qc.invalidateQueries({ queryKey: ["board-issues"] });
+		},
 	});
 }
 
-export function useUpdateIssueStatus() {
+export function useUpdateIssue() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: ({ id, status }: { id: number; status: StatusType }) =>
-			issuesApi.updateStatus(id, status),
-		onSuccess: () => qc.invalidateQueries({ queryKey: ["issues"] }),
+		mutationFn: ({ id, data }: { id: string; data: UpdateIssueInput }) =>
+			issuesApi.update(id, data),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["issues"] });
+			qc.invalidateQueries({ queryKey: ["board-issues"] });
+		},
+	});
+}
+
+export function useMoveIssue() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id, data }: { id: string; data: MoveIssueInput }) =>
+			issuesApi.move(id, data),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["board-issues"] });
+		},
 	});
 }
 
 export function useDeleteIssue() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: (id: number) => issuesApi.delete(id),
-		onSuccess: () => qc.invalidateQueries({ queryKey: ["issues"] }),
+		mutationFn: (id: string) => issuesApi.delete(id),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["issues"] });
+			qc.invalidateQueries({ queryKey: ["board-issues"] });
+		},
 	});
 }

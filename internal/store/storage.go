@@ -2,28 +2,26 @@ package store
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jesusthecreator017/fswithgo/internal/store/dbsqlc"
 )
 
-// Storage holds all repository interfaces — one per domain entity.
-//
-// Each field is an interface (not a concrete type) so you can:
-//   - Swap in mock implementations for unit testing
-//   - Change the underlying database without touching handler code
-//
-// This is the "Repository Pattern" — your HTTP handlers depend on these
-// interfaces, not on the database directly.
+var ErrNotFound = errors.New("resource not found")
+
 type Storage struct {
 	Issues interface {
 		Create(context.Context, *Issue) error
-		GetByID(context.Context, int64) (*Issue, error)
+		GetByID(context.Context, uuid.UUID) (*Issue, error)
 		List(context.Context) ([]*Issue, error)
 		ListByUserID(context.Context, uuid.UUID) ([]*Issue, error)
-		UpdateStatus(context.Context, int64, StatusType) (*Issue, error)
-		Delete(context.Context, int64) error
+		ListByTeamID(context.Context, uuid.UUID) ([]*Issue, error)
+		ListByBoardID(context.Context, uuid.UUID) ([]*Issue, error)
+		Update(context.Context, *Issue) error
+		MoveIssue(context.Context, uuid.UUID, uuid.UUID, int32) error
+		Delete(context.Context, uuid.UUID) error
 	}
 	Users interface {
 		Create(context.Context, *User) error
@@ -46,14 +44,29 @@ type Storage struct {
 		CountMembers(ctx context.Context, teamID uuid.UUID) (int64, error)
 		Delete(ctx context.Context, id uuid.UUID) error
 	}
+	Boards interface {
+		CreateBoard(context.Context, *Board) error
+		GetBoardByID(context.Context, uuid.UUID) (*Board, error)
+		GetPersonalBoard(context.Context, uuid.UUID) (*Board, error)
+		GetTeamBoard(context.Context, uuid.UUID) (*Board, error)
+		DeleteBoard(context.Context, uuid.UUID) error
+		CreateColumn(context.Context, *BoardColumn) error
+		ListColumns(context.Context, uuid.UUID) ([]*BoardColumn, error)
+		UpdateColumn(context.Context, uuid.UUID, string) (*BoardColumn, error)
+		ReorderColumn(context.Context, uuid.UUID, int32) (*BoardColumn, error)
+		DeleteColumn(context.Context, uuid.UUID) error
+	}
+	Labels interface {
+		Create(context.Context, *Label) error
+		List(context.Context) ([]*Label, error)
+		GetByID(context.Context, uuid.UUID) (*Label, error)
+		Delete(context.Context, uuid.UUID) error
+		AddToIssue(context.Context, uuid.UUID, uuid.UUID) error
+		RemoveFromIssue(context.Context, uuid.UUID, uuid.UUID) error
+		ListForIssue(context.Context, uuid.UUID) ([]*Label, error)
+	}
 }
 
-// NewStorage creates a Storage with real database-backed implementations.
-//
-// It takes a *pgxpool.Pool (not *sql.DB) because we use pgx/v5 native mode.
-// dbsqlc.New(pool) creates the sqlc-generated Queries struct, which accepts
-// anything implementing the DBTX interface — pgxpool.Pool satisfies it,
-// and so do pgx.Conn and pgx.Tx (for transactions).
 func NewStorage(pool *pgxpool.Pool) Storage {
 	queries := dbsqlc.New(pool)
 
@@ -62,5 +75,7 @@ func NewStorage(pool *pgxpool.Pool) Storage {
 		Users:  &UserStore{queries: queries},
 		Admin:  &AdminStore{queries: queries},
 		Teams:  &TeamStore{queries: queries},
+		Boards: &BoardStore{queries: queries},
+		Labels: &LabelStore{queries: queries},
 	}
 }

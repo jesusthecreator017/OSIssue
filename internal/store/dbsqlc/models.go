@@ -12,47 +12,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type StatusType string
+type PriorityType string
 
 const (
-	StatusTypeIncomplete StatusType = "Incomplete"
-	StatusTypeInProgress StatusType = "In-Progress"
-	StatusTypeComplete   StatusType = "Complete"
+	PriorityTypeLow      PriorityType = "Low"
+	PriorityTypeMedium   PriorityType = "Medium"
+	PriorityTypeHigh     PriorityType = "High"
+	PriorityTypeCritical PriorityType = "Critical"
 )
 
-func (e *StatusType) Scan(src interface{}) error {
+func (e *PriorityType) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = StatusType(s)
+		*e = PriorityType(s)
 	case string:
-		*e = StatusType(s)
+		*e = PriorityType(s)
 	default:
-		return fmt.Errorf("unsupported scan type for StatusType: %T", src)
+		return fmt.Errorf("unsupported scan type for PriorityType: %T", src)
 	}
 	return nil
 }
 
-type NullStatusType struct {
-	StatusType StatusType `json:"status_type"`
-	Valid      bool       `json:"valid"` // Valid is true if StatusType is not NULL
+type NullPriorityType struct {
+	PriorityType PriorityType `json:"priority_type"`
+	Valid        bool         `json:"valid"` // Valid is true if PriorityType is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullStatusType) Scan(value interface{}) error {
+func (ns *NullPriorityType) Scan(value interface{}) error {
 	if value == nil {
-		ns.StatusType, ns.Valid = "", false
+		ns.PriorityType, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.StatusType.Scan(value)
+	return ns.PriorityType.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullStatusType) Value() (driver.Value, error) {
+func (ns NullPriorityType) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.StatusType), nil
+	return string(ns.PriorityType), nil
 }
 
 type TeamRole string
@@ -98,14 +99,48 @@ func (ns NullTeamRole) Value() (driver.Value, error) {
 	return string(ns.TeamRole), nil
 }
 
-type Issue struct {
-	ID          int64              `json:"id"`
-	UserID      uuid.UUID          `json:"user_id"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	Status      string             `json:"status"`
+type Board struct {
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	OwnerUserID pgtype.UUID        `json:"owner_user_id"`
+	OwnerTeamID pgtype.UUID        `json:"owner_team_id"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type BoardColumn struct {
+	ID        uuid.UUID          `json:"id"`
+	BoardID   uuid.UUID          `json:"board_id"`
+	Name      string             `json:"name"`
+	Position  int32              `json:"position"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Issue struct {
+	ID            uuid.UUID          `json:"id"`
+	UserID        uuid.UUID          `json:"user_id"`
+	AssigneeID    pgtype.UUID        `json:"assignee_id"`
+	TeamID        pgtype.UUID        `json:"team_id"`
+	BoardColumnID pgtype.UUID        `json:"board_column_id"`
+	Position      int32              `json:"position"`
+	Title         string             `json:"title"`
+	Description   string             `json:"description"`
+	Priority      string             `json:"priority"`
+	DueDate       pgtype.Timestamptz `json:"due_date"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type IssueLabel struct {
+	IssueID uuid.UUID `json:"issue_id"`
+	LabelID uuid.UUID `json:"label_id"`
+}
+
+type Label struct {
+	ID        uuid.UUID          `json:"id"`
+	Name      string             `json:"name"`
+	Color     string             `json:"color"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Team struct {

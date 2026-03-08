@@ -40,11 +40,7 @@ sql:
               import: "github.com/google/uuid"
               type: "UUID"
 
-          # Map the status_type PostgreSQL enum → Go string.
-          # This keeps compatibility with your existing StatusType
-          # (which is `type StatusType string`). Your IssueStore
-          # translates between string and StatusType.
-          - db_type: "status_type"
+          - db_type: "priority_type"
             go_type: "string"
 
           - db_type: "team_role"

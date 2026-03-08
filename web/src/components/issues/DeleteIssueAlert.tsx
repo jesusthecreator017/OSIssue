@@ -13,7 +13,7 @@ import {
 import { useDeleteIssue } from "@/hooks/useIssues";
 
 interface DeleteIssueAlertProps {
-	issueId: number;
+	issueId: string;
 	issueTitle: string;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;

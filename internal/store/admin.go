@@ -7,15 +7,15 @@ import (
 	"github.com/jesusthecreator017/fswithgo/internal/store/dbsqlc"
 )
 
-type IssueStatusCount struct {
-	Status string `json:"status"`
-	Count  int64  `json:"count"`
+type IssuePriorityCount struct {
+	Priority string `json:"priority"`
+	Count    int64  `json:"count"`
 }
 
 type AdminStats struct {
-	TotalUsers    int64              `json:"total_users"`
-	TotalIssues   int64              `json:"total_issues"`
-	IssuesByStatus []IssueStatusCount `json:"issues_by_status"`
+	TotalUsers      int64                `json:"total_users"`
+	TotalIssues     int64                `json:"total_issues"`
+	IssuesByPriority []IssuePriorityCount `json:"issues_by_priority"`
 }
 
 type AdminStore struct {
@@ -28,24 +28,24 @@ func (a *AdminStore) GetStats(ctx context.Context) (*AdminStats, error) {
 		return nil, fmt.Errorf("counting users: %w", err)
 	}
 
-	rows, err := a.queries.CountIssuesByStatus(ctx)
+	rows, err := a.queries.CountIssuesByPriority(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("counting issues by status: %w", err)
+		return nil, fmt.Errorf("counting issues by priority: %w", err)
 	}
 
 	var totalIssues int64
-	issuesByStatus := make([]IssueStatusCount, len(rows))
+	issuesByPriority := make([]IssuePriorityCount, len(rows))
 	for i, row := range rows {
-		issuesByStatus[i] = IssueStatusCount{
-			Status: row.Status,
-			Count:  row.Count,
+		issuesByPriority[i] = IssuePriorityCount{
+			Priority: row.Priority,
+			Count:    row.Count,
 		}
 		totalIssues += row.Count
 	}
 
 	return &AdminStats{
-		TotalUsers:     totalUsers,
-		TotalIssues:    totalIssues,
-		IssuesByStatus: issuesByStatus,
+		TotalUsers:       totalUsers,
+		TotalIssues:      totalIssues,
+		IssuesByPriority: issuesByPriority,
 	}, nil
 }

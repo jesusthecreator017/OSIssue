@@ -31,25 +31,17 @@ export function useIssueLabels(issueId: string) {
 export function useAddLabelToIssue() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: ({
-			issueId,
-			labelId,
-		}: { issueId: string; labelId: string }) =>
+		mutationFn: ({ issueId, labelId }: { issueId: string; labelId: string }) =>
 			issuesApi.addLabel(issueId, labelId),
-		onSuccess: () =>
-			qc.invalidateQueries({ queryKey: ["issue-labels"] }),
+		onSuccess: () => qc.invalidateQueries({ queryKey: ["issue-labels"] }),
 	});
 }
 
 export function useRemoveLabelFromIssue() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: ({
-			issueId,
-			labelId,
-		}: { issueId: string; labelId: string }) =>
+		mutationFn: ({ issueId, labelId }: { issueId: string; labelId: string }) =>
 			issuesApi.removeLabel(issueId, labelId),
-		onSuccess: () =>
-			qc.invalidateQueries({ queryKey: ["issue-labels"] }),
+		onSuccess: () => qc.invalidateQueries({ queryKey: ["issue-labels"] }),
 	});
 }

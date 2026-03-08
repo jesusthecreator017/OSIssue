@@ -110,10 +110,7 @@ export default function TeamDetailPage() {
 					)}
 
 					{tab === "board" && boardData && (
-						<KanbanBoard
-							board={boardData.board}
-							columns={boardData.columns}
-						/>
+						<KanbanBoard board={boardData.board} columns={boardData.columns} />
 					)}
 
 					{tab === "board" && !boardData && (

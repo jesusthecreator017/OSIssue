@@ -33,8 +33,7 @@ export default function IssuePage() {
 		);
 	}
 
-	const isOverdue =
-		issue.due_date && new Date(issue.due_date) < new Date();
+	const isOverdue = issue.due_date && new Date(issue.due_date) < new Date();
 
 	return (
 		<div className="mx-auto max-w-2xl px-4 py-8 space-y-6">

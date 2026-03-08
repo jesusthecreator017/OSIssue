@@ -8,8 +8,7 @@ import type {
 } from "../schemas/issue";
 
 export const issuesApi = {
-	list: () =>
-		apiFetch<{ issues: Issue[] }>("/v1/issues").then((r) => r.issues),
+	list: () => apiFetch<{ issues: Issue[] }>("/v1/issues").then((r) => r.issues),
 
 	getById: (id: string) =>
 		apiFetch<{ issue: Issue }>(`/v1/issues/${id}`).then((r) => r.issue),

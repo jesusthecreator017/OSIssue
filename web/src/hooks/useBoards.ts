@@ -33,8 +33,11 @@ export function useCreateColumn() {
 			boardId,
 			name,
 			position,
-		}: { boardId: string; name: string; position: number }) =>
-			boardsApi.createColumn(boardId, name, position),
+		}: {
+			boardId: string;
+			name: string;
+			position: number;
+		}) => boardsApi.createColumn(boardId, name, position),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["personal-board"] });
 			qc.invalidateQueries({ queryKey: ["team-board"] });
@@ -49,8 +52,11 @@ export function useUpdateColumn() {
 			boardId,
 			colId,
 			name,
-		}: { boardId: string; colId: string; name: string }) =>
-			boardsApi.updateColumn(boardId, colId, name),
+		}: {
+			boardId: string;
+			colId: string;
+			name: string;
+		}) => boardsApi.updateColumn(boardId, colId, name),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["personal-board"] });
 			qc.invalidateQueries({ queryKey: ["team-board"] });
@@ -65,8 +71,11 @@ export function useReorderColumn() {
 			boardId,
 			colId,
 			position,
-		}: { boardId: string; colId: string; position: number }) =>
-			boardsApi.reorderColumn(boardId, colId, position),
+		}: {
+			boardId: string;
+			colId: string;
+			position: number;
+		}) => boardsApi.reorderColumn(boardId, colId, position),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["personal-board"] });
 			qc.invalidateQueries({ queryKey: ["team-board"] });
@@ -77,10 +86,7 @@ export function useReorderColumn() {
 export function useDeleteColumn() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: ({
-			boardId,
-			colId,
-		}: { boardId: string; colId: string }) =>
+		mutationFn: ({ boardId, colId }: { boardId: string; colId: string }) =>
 			boardsApi.deleteColumn(boardId, colId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["personal-board"] });

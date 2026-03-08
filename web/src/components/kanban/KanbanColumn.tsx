@@ -15,7 +15,11 @@ interface KanbanColumnProps {
 	boardId: string;
 }
 
-export function KanbanColumn({ column, issues, boardId: _boardId }: KanbanColumnProps) {
+export function KanbanColumn({
+	column,
+	issues,
+	boardId: _boardId,
+}: KanbanColumnProps) {
 	const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
 	return (

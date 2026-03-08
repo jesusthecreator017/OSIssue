@@ -46,8 +46,7 @@ export function IssueCard({ issue, isDragOverlay }: IssueCardProps) {
 		opacity: isDragging ? 0.5 : 1,
 	};
 
-	const isOverdue =
-		issue.due_date && new Date(issue.due_date) < new Date();
+	const isOverdue = issue.due_date && new Date(issue.due_date) < new Date();
 
 	return (
 		<>
@@ -57,7 +56,9 @@ export function IssueCard({ issue, isDragOverlay }: IssueCardProps) {
 				{...attributes}
 				{...listeners}
 			>
-				<Card className={`gap-3 py-4 cursor-grab active:cursor-grabbing ${isDragOverlay ? "shadow-lg rotate-2" : ""}`}>
+				<Card
+					className={`gap-3 py-4 cursor-grab active:cursor-grabbing ${isDragOverlay ? "shadow-lg rotate-2" : ""}`}
+				>
 					<CardHeader className="gap-1">
 						<CardTitle className="text-sm">
 							<Link

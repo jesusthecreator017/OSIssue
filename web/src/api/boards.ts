@@ -40,10 +40,7 @@ export const boardsApi = {
 		).then((r) => r.column),
 
 	deleteColumn: (boardId: string, colId: string) =>
-		apiFetch<{ message: string }>(
-			`/v1/boards/${boardId}/columns/${colId}`,
-			{
-				method: "DELETE",
-			},
-		),
+		apiFetch<{ message: string }>(`/v1/boards/${boardId}/columns/${colId}`, {
+			method: "DELETE",
+		}),
 };

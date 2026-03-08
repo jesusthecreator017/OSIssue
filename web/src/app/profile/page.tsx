@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Calendar, Shield, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useIssues } from "@/hooks/useIssues";
 import {
 	hasPermission,
 	PERM_READ,

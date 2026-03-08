@@ -29,11 +29,7 @@ interface KanbanBoardProps {
 export function KanbanBoard({ board, columns }: KanbanBoardProps) {
 	const [createOpen, setCreateOpen] = useState(false);
 	const [activeIssue, setActiveIssue] = useState<Issue | null>(null);
-	const {
-		data: issues,
-		isLoading,
-		error,
-	} = useBoardIssues(board.id);
+	const { data: issues, isLoading, error } = useBoardIssues(board.id);
 	const moveIssue = useMoveIssue();
 
 	const sensors = useSensors(
@@ -83,7 +79,7 @@ export function KanbanBoard({ board, columns }: KanbanBoardProps) {
 		if (overColumnId) {
 			// Dropped directly on a column
 			targetColumnId = overColumnId;
-			targetPosition = (issuesByColumn[targetColumnId]?.length ?? 0);
+			targetPosition = issuesByColumn[targetColumnId]?.length ?? 0;
 		} else {
 			// Dropped on an issue — find its column
 			const overIssue = (issues ?? []).find((i) => i.id === over.id);
